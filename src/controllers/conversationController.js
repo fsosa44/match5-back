@@ -7,7 +7,7 @@ const getConversations = async (req, res) => {
     const conversations = await Conversation.find({
       participants: req.user._id,
     })
-      .populate("participants", "name position")
+      .populate("participants", "name position profilePhoto")
       .sort({ updatedAt: -1 });
 
     res.json(conversations);
@@ -32,13 +32,33 @@ const getOrCreateConversation = async (req, res) => {
     // Check if conversation already exists
     let conversation = await Conversation.findOne({
       participants: { $all: [req.user._id, participantId], $size: 2 },
-    }).populate("participants", "name position");
+    }).populate("participants", "name position profilePhoto");
 
     if (!conversation) {
       conversation = await Conversation.create({
         participants: [req.user._id, participantId],
       });
-      await conversation.populate("participants", "name position");
+      await conversation.populate("participants", "name position profilePhoto");
+    }
+
+    res.json(conversation);
+  } catch (error) {
+    res.status(500).json({ message: "Error del servidor" });
+  }
+};
+
+// GET /api/conversations/:conversationId
+const getConversationById = async (req, res) => {
+  try {
+    const conversation = await Conversation.findById(req.params.conversationId)
+      .populate("participants", "name position profilePhoto");
+
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversación no encontrada" });
+    }
+
+    if (!conversation.participants.some((p) => p._id.toString() === req.user._id.toString())) {
+      return res.status(403).json({ message: "No autorizado" });
     }
 
     res.json(conversation);
@@ -63,7 +83,7 @@ const getPrivateMessages = async (req, res) => {
     const messages = await PrivateMessage.find({
       conversation: req.params.conversationId,
     })
-      .populate("sender", "name")
+      .populate("sender", "name profilePhoto")
       .sort({ createdAt: 1 });
 
     res.json(messages);
@@ -72,4 +92,4 @@ const getPrivateMessages = async (req, res) => {
   }
 };
 
-module.exports = { getConversations, getOrCreateConversation, getPrivateMessages };
+module.exports = { getConversations, getOrCreateConversation, getConversationById, getPrivateMessages };

@@ -3,6 +3,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
 const morgan = require("morgan");
+const path = require("path");
 require("dotenv").config();
 
 const connectDB = require("./config/db");
@@ -32,6 +33,7 @@ app.set("io", io);
 app.use(cors());
 app.use(morgan("dev"));
 app.use(express.json());
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // Rutas
 app.use("/api/auth", authRoutes);

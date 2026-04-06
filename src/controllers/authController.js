@@ -14,7 +14,7 @@ const register = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, email, password, phone, position, birthDate, playStyle, location } = req.body;
+    const { name, lastName, email, password, phone, position, birthDate, playStyle, location } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -23,6 +23,7 @@ const register = async (req, res) => {
 
     const user = await User.create({
       name,
+      lastName,
       email,
       password,
       phone,
@@ -68,7 +69,9 @@ const login = async (req, res) => {
 
 // GET /api/auth/me
 const getMe = async (req, res) => {
-  res.json(req.user);
+  const user = await User.findById(req.user._id)
+    .populate("reviews.author", "name lastName profilePhoto");
+  res.json(user);
 };
 
 module.exports = { register, login, getMe };

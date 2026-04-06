@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 const Message = require("./models/Message");
 const PrivateMessage = require("./models/PrivateMessage");
 const Conversation = require("./models/Conversation");
+const Match = require("./models/Match");
 const User = require("./models/User");
 
 const setupSocket = (io) => {
@@ -22,6 +23,9 @@ const setupSocket = (io) => {
 
   io.on("connection", (socket) => {
     console.log(`Usuario conectado: ${socket.userId}`);
+
+    // Join personal notification room
+    socket.join(`user:${socket.userId}`);
 
     // Join a match chat room
     socket.on("join:match", (matchId) => {
@@ -45,15 +49,34 @@ const setupSocket = (io) => {
           text: text.trim(),
         });
 
-        await message.populate("sender", "name");
+        await message.populate("sender", "name profilePhoto");
 
         io.to(`match:${matchId}`).emit("message:match", {
           _id: message._id,
           match: matchId,
-          sender: { _id: message.sender._id, name: message.sender.name },
+          sender: { _id: message.sender._id, name: message.sender.name, profilePhoto: message.sender.profilePhoto || null },
           text: message.text,
           createdAt: message.createdAt,
         });
+
+        // Notify match participants who are not in the room
+        try {
+          const matchDoc = await Match.findById(matchId).lean();
+          if (matchDoc) {
+            const playerIds = matchDoc.players
+              .filter((p) => p.user)
+              .map((p) => p.user.toString())
+              .filter((id) => id !== socket.userId);
+            playerIds.forEach((uid) => {
+              io.to(`user:${uid}`).emit("notification:message", {
+                type: "match",
+                chatId: matchId,
+              });
+            });
+          }
+        } catch (e) {
+          // Non-critical, don't block
+        }
       } catch (error) {
         console.error("Error enviando mensaje de partido:", error);
       }
@@ -96,15 +119,26 @@ const setupSocket = (io) => {
         };
         await conversation.save();
 
-        await message.populate("sender", "name");
+        await message.populate("sender", "name profilePhoto");
 
         io.to(`conversation:${conversationId}`).emit("message:private", {
           _id: message._id,
           conversation: conversationId,
-          sender: { _id: message.sender._id, name: message.sender.name },
+          sender: { _id: message.sender._id, name: message.sender.name, profilePhoto: message.sender.profilePhoto || null },
           text: message.text,
           createdAt: message.createdAt,
         });
+
+        // Notify the other participant(s)
+        conversation.participants
+          .map((p) => p.toString())
+          .filter((id) => id !== socket.userId)
+          .forEach((uid) => {
+            io.to(`user:${uid}`).emit("notification:message", {
+              type: "private",
+              chatId: conversationId,
+            });
+          });
       } catch (error) {
         console.error("Error enviando mensaje privado:", error);
       }

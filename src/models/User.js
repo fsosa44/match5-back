@@ -13,6 +13,7 @@ const reviewSchema = new mongoose.Schema(
 const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
+    lastName: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true, minlength: 6 },
     phone: { type: String, trim: true },
@@ -28,6 +29,7 @@ const userSchema = new mongoose.Schema(
       default: "flexible",
     },
     location: { type: String, trim: true },
+    profilePhoto: { type: String, default: null },
     rating: { type: Number, default: 0, min: 0, max: 5 },
     matchesPlayed: { type: Number, default: 0 },
     goals: { type: Number, default: 0 },

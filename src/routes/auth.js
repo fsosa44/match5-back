@@ -7,6 +7,7 @@ router.post(
   "/register",
   [
     body("name").trim().notEmpty().withMessage("El nombre es requerido"),
+    body("lastName").trim().notEmpty().withMessage("El apellido es requerido"),
     body("email").isEmail().withMessage("Email inválido"),
     body("password").isLength({ min: 6 }).withMessage("La contraseña debe tener al menos 6 caracteres"),
     body("birthDate").optional().isISO8601().withMessage("Fecha de nacimiento inválida"),

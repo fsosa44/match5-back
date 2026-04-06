@@ -10,7 +10,7 @@ const getMessages = async (req, res) => {
     }
 
     const messages = await Message.find({ match: req.params.matchId })
-      .populate("sender", "name")
+      .populate("sender", "name profilePhoto")
       .sort({ createdAt: 1 });
 
     res.json(messages);
@@ -39,7 +39,7 @@ const sendMessage = async (req, res) => {
       text: text.trim(),
     });
 
-    await message.populate("sender", "name");
+    await message.populate("sender", "name profilePhoto");
     res.status(201).json(message);
   } catch (error) {
     res.status(500).json({ message: "Error del servidor" });

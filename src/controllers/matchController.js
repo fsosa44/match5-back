@@ -11,8 +11,8 @@ const getMatches = async (req, res) => {
     if (intensity) filter.intensity = intensity;
 
     const matches = await Match.find(filter)
-      .populate("players.user", "name position")
-      .populate("createdBy", "name")
+      .populate("players.user", "name lastName position")
+      .populate("createdBy", "name lastName")
       .sort({ date: 1 });
 
     res.json(matches);
@@ -25,8 +25,8 @@ const getMatches = async (req, res) => {
 const getMatchById = async (req, res) => {
   try {
     const match = await Match.findById(req.params.id)
-      .populate("players.user", "name position rating birthDate playStyle")
-      .populate("createdBy", "name");
+      .populate("players.user", "name lastName position rating birthDate playStyle")
+      .populate("createdBy", "name lastName");
 
     if (!match) {
       return res.status(404).json({ message: "Partido no encontrado" });
@@ -118,7 +118,7 @@ const joinMatch = async (req, res) => {
     slot.user = req.user._id;
     await match.save();
 
-    await match.populate("players.user", "name position");
+    await match.populate("players.user", "name lastName position");
     res.json(match);
   } catch (error) {
     res.status(500).json({ message: "Error del servidor" });
@@ -145,7 +145,7 @@ const leaveMatch = async (req, res) => {
     slot.user = null;
     await match.save();
 
-    await match.populate("players.user", "name position");
+    await match.populate("players.user", "name lastName position");
     res.json(match);
   } catch (error) {
     res.status(500).json({ message: "Error del servidor" });
