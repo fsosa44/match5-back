@@ -120,6 +120,12 @@ const joinMatch = async (req, res) => {
 
     await match.populate("players.user", "name lastName position");
     res.json(match);
+
+    // Notify viewers of this match in real-time
+    try {
+      const io = req.app.get("io");
+      io.to(`match-detail:${req.params.id}`).emit("match:playerUpdate", { matchId: req.params.id });
+    } catch (e) { /* non-critical */ }
   } catch (error) {
     res.status(500).json({ message: "Error del servidor" });
   }
@@ -147,6 +153,12 @@ const leaveMatch = async (req, res) => {
 
     await match.populate("players.user", "name lastName position");
     res.json(match);
+
+    // Notify viewers of this match in real-time
+    try {
+      const io = req.app.get("io");
+      io.to(`match-detail:${req.params.id}`).emit("match:playerUpdate", { matchId: req.params.id });
+    } catch (e) { /* non-critical */ }
   } catch (error) {
     res.status(500).json({ message: "Error del servidor" });
   }

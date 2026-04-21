@@ -38,6 +38,16 @@ const setupSocket = (io) => {
       socket.leave(`match:${matchId}`);
     });
 
+    // Join match detail room (for real-time player updates)
+    socket.on("join:match-detail", (matchId) => {
+      socket.join(`match-detail:${matchId}`);
+    });
+
+    // Leave match detail room
+    socket.on("leave:match-detail", (matchId) => {
+      socket.leave(`match-detail:${matchId}`);
+    });
+
     // Send message to match chat
     socket.on("message:match", async ({ matchId, text }) => {
       try {
@@ -49,12 +59,12 @@ const setupSocket = (io) => {
           text: text.trim(),
         });
 
-        await message.populate("sender", "name profilePhoto");
+        await message.populate("sender", "name lastName profilePhoto");
 
         io.to(`match:${matchId}`).emit("message:match", {
           _id: message._id,
           match: matchId,
-          sender: { _id: message.sender._id, name: message.sender.name, profilePhoto: message.sender.profilePhoto || null },
+          sender: { _id: message.sender._id, name: message.sender.name, lastName: message.sender.lastName || "", profilePhoto: message.sender.profilePhoto || null },
           text: message.text,
           createdAt: message.createdAt,
         });
@@ -71,6 +81,9 @@ const setupSocket = (io) => {
               io.to(`user:${uid}`).emit("notification:message", {
                 type: "match",
                 chatId: matchId,
+                senderName: message.sender.name,
+                senderLastName: message.sender.lastName || "",
+                text: text.trim().substring(0, 80),
               });
             });
           }
@@ -119,12 +132,12 @@ const setupSocket = (io) => {
         };
         await conversation.save();
 
-        await message.populate("sender", "name profilePhoto");
+        await message.populate("sender", "name lastName profilePhoto");
 
         io.to(`conversation:${conversationId}`).emit("message:private", {
           _id: message._id,
           conversation: conversationId,
-          sender: { _id: message.sender._id, name: message.sender.name, profilePhoto: message.sender.profilePhoto || null },
+          sender: { _id: message.sender._id, name: message.sender.name, lastName: message.sender.lastName || "", profilePhoto: message.sender.profilePhoto || null },
           text: message.text,
           createdAt: message.createdAt,
         });
@@ -137,6 +150,9 @@ const setupSocket = (io) => {
             io.to(`user:${uid}`).emit("notification:message", {
               type: "private",
               chatId: conversationId,
+              senderName: message.sender.name,
+              senderLastName: message.sender.lastName || "",
+              text: text.trim().substring(0, 80),
             });
           });
       } catch (error) {
