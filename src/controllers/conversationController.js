@@ -7,7 +7,7 @@ const getConversations = async (req, res) => {
     const conversations = await Conversation.find({
       participants: req.user._id,
     })
-      .populate("participants", "name position profilePhoto")
+      .populate("participants", "name lastName position profilePhoto")
       .sort({ updatedAt: -1 });
 
     res.json(conversations);
@@ -32,13 +32,13 @@ const getOrCreateConversation = async (req, res) => {
     // Check if conversation already exists
     let conversation = await Conversation.findOne({
       participants: { $all: [req.user._id, participantId], $size: 2 },
-    }).populate("participants", "name position profilePhoto");
+    }).populate("participants", "name lastName position profilePhoto");
 
     if (!conversation) {
       conversation = await Conversation.create({
         participants: [req.user._id, participantId],
       });
-      await conversation.populate("participants", "name position profilePhoto");
+      await conversation.populate("participants", "name lastName position profilePhoto");
     }
 
     res.json(conversation);
@@ -51,7 +51,7 @@ const getOrCreateConversation = async (req, res) => {
 const getConversationById = async (req, res) => {
   try {
     const conversation = await Conversation.findById(req.params.conversationId)
-      .populate("participants", "name position profilePhoto");
+      .populate("participants", "name lastName position profilePhoto");
 
     if (!conversation) {
       return res.status(404).json({ message: "Conversación no encontrada" });
@@ -83,7 +83,7 @@ const getPrivateMessages = async (req, res) => {
     const messages = await PrivateMessage.find({
       conversation: req.params.conversationId,
     })
-      .populate("sender", "name profilePhoto")
+      .populate("sender", "name lastName profilePhoto")
       .sort({ createdAt: 1 });
 
     res.json(messages);

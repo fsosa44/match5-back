@@ -14,7 +14,7 @@ const searchUsers = async (req, res) => {
       name: { $regex: q.trim(), $options: "i" },
       _id: { $ne: req.user._id },
     })
-      .select("name position playStyle")
+      .select("name lastName position playStyle")
       .limit(20);
 
     res.json(users);
